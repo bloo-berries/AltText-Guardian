@@ -50,6 +50,6 @@ src/
 
 ```bash
 npm install
-npx tsc --noEmit    # Type-check
-devvit upload       # Deploy to Reddit
+npm run build       # Type-check (tsc --noEmit)
+npx devvit upload   # Deploy to Reddit
 ```

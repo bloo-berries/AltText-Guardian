@@ -7,17 +7,18 @@
   "license": "BSD-3-Clause",
   "main": "src/main.tsx",
   "scripts": {
-    "build": "devvit build",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "upload": "devvit upload"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
-    "@devvit/public-api": "0.11.x"
+    "@devvit/public-api": "0.12.23"
   },
   "devDependencies": {
-    "@devvit/tsconfig": "0.11.x",
-    "typescript": "5.x"
+    "@devvit/tsconfig": "0.12.23",
+    "typescript": "5.8.3"
   }
 }

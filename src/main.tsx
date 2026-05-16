@@ -5,8 +5,10 @@ import { generateAltText } from './visionApi.js';
 
 Devvit.configure({
   redditAPI: true,
-  http: true,
   redis: true,
+  http: {
+    domains: ['router.huggingface.co'],
+  },
 });
 
 // ─── Settings ────────────────────────────────────────────────────────────────
@@ -39,7 +41,7 @@ Devvit.addSettings([
   {
     name: 'enableAutoDraft',
     type: 'boolean',
-    label: 'Enable auto-draft alt-text (uses Claude Vision)',
+    label: 'Enable auto-draft alt-text (Hugging Face vision model)',
     defaultValue: DEFAULTS.enableAutoDraft,
     scope: 'installation',
   },
