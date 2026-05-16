@@ -1,0 +1,23 @@
+{
+  "name": "alttext-guardian",
+  "version": "0.0.1",
+  "description": "Accessibility mod tool that detects image posts missing alt-text descriptions",
+  "private": true,
+  "type": "module",
+  "license": "BSD-3-Clause",
+  "main": "src/main.tsx",
+  "scripts": {
+    "build": "devvit build",
+    "upload": "devvit upload"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@devvit/public-api": "0.11.x"
+  },
+  "devDependencies": {
+    "@devvit/tsconfig": "0.11.x",
+    "typescript": "5.x"
+  }
+}

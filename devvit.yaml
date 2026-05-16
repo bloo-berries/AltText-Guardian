@@ -1,0 +1,3 @@
+# yaml-language-server: $schema=https://developers.reddit.com/schema/devvit.yaml
+name: alttext-guardian
+version: 0.0.1
