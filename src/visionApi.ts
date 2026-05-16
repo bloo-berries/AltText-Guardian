@@ -1,4 +1,11 @@
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
+/**
+ * Alt-text generation using open-source vision models via Hugging Face Inference Providers.
+ * Uses the OpenAI-compatible chat completions endpoint at router.huggingface.co.
+ * Model: Qwen/Qwen2.5-VL-7B-Instruct (open-source, Apache 2.0 licensed)
+ */
+
+const HF_ROUTER_URL = 'https://router.huggingface.co/v1/chat/completions';
+const MODEL = 'Qwen/Qwen2.5-VL-7B-Instruct';
 
 const VISION_PROMPT = `Describe this image for someone who cannot see it. Focus on:
 1. What is depicted (people, objects, scene, action)
@@ -8,39 +15,38 @@ const VISION_PROMPT = `Describe this image for someone who cannot see it. Focus 
 
 Write a concise, informative description (2-4 sentences). Do not start with "This image shows" - just describe what's there directly.`;
 
-interface VisionResponse {
-  content: Array<{ type: string; text?: string }>;
+interface ChatCompletionResponse {
+  choices: Array<{
+    message: {
+      content: string;
+    };
+  }>;
 }
 
 /**
- * Generate alt-text for an image using Claude's vision API.
- * Uses global fetch (enabled by Devvit.configure({ http: true })).
+ * Generate alt-text for an image using an open-source vision model via Hugging Face.
+ * Requires a free Hugging Face API token (https://huggingface.co/settings/tokens).
  */
 export async function generateAltText(
   imageUrl: string,
-  apiKey: string
+  hfToken: string
 ): Promise<string | null> {
   try {
-    const response = await fetch(ANTHROPIC_API_URL, {
+    const response = await fetch(HF_ROUTER_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        Authorization: `Bearer ${hfToken}`,
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
+        model: MODEL,
         messages: [
           {
             role: 'user',
             content: [
               {
-                type: 'image',
-                source: {
-                  type: 'url',
-                  url: imageUrl,
-                },
+                type: 'image_url',
+                image_url: { url: imageUrl },
               },
               {
                 type: 'text',
@@ -49,6 +55,7 @@ export async function generateAltText(
             ],
           },
         ],
+        max_tokens: 300,
       }),
     });
 
@@ -57,12 +64,9 @@ export async function generateAltText(
       return null;
     }
 
-    const data = (await response.json()) as VisionResponse;
-    if (data?.content?.[0]?.type === 'text') {
-      return data.content[0].text ?? null;
-    }
-
-    return null;
+    const data = (await response.json()) as ChatCompletionResponse;
+    const content = data?.choices?.[0]?.message?.content;
+    return content?.trim() ?? null;
   } catch (error) {
     console.error('Vision API request failed:', error);
     return null;

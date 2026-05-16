@@ -58,10 +58,10 @@ Devvit.addSettings([
     scope: 'installation',
   },
   {
-    name: 'anthropicApiKey',
+    name: 'hfApiToken',
     type: 'string',
-    label: 'Anthropic API Key',
-    helpText: 'Required for auto-draft feature. Get one at console.anthropic.com',
+    label: 'Hugging Face API Token',
+    helpText: 'Required for auto-draft feature. Get a free token at huggingface.co/settings/tokens',
     isSecret: true,
     scope: 'installation',
   },
@@ -141,7 +141,7 @@ Devvit.addSchedulerJob({
 
     // Auto-draft if enabled
     const enableAutoDraft = settings.enableAutoDraft ?? DEFAULTS.enableAutoDraft;
-    const apiKey = settings.anthropicApiKey as string;
+    const apiKey = settings.hfApiToken as string;
 
     if (enableAutoDraft && apiKey && post.url) {
       const draft = await generateAltText(post.url, apiKey);
