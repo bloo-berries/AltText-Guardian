@@ -1,11 +1,11 @@
 /**
  * Alt-text generation using open-source vision models via Hugging Face Inference Providers.
  * Uses the OpenAI-compatible chat completions endpoint at router.huggingface.co.
- * Model: Qwen/Qwen2.5-VL-7B-Instruct (open-source, Apache 2.0 licensed)
+ * Model: meta-llama/Llama-4-Scout-17B-16E-Instruct (VLM available via HF Inference Providers)
  */
 
 const HF_ROUTER_URL = 'https://router.huggingface.co/v1/chat/completions';
-const MODEL = 'Qwen/Qwen2.5-VL-7B-Instruct';
+const MODEL = 'meta-llama/Llama-4-Scout-17B-16E-Instruct';
 
 const VISION_PROMPT = `Describe this image for someone who cannot see it. Focus on:
 1. What is depicted (people, objects, scene, action)
@@ -60,13 +60,18 @@ export async function generateAltText(
     });
 
     if (!response.ok) {
-      console.error(`Vision API error: ${response.status}`);
+      const errorBody = await response.text();
+      console.error(`Vision API error: ${response.status} ${response.statusText} - ${errorBody}`);
       return null;
     }
 
     const data = (await response.json()) as ChatCompletionResponse;
     const content = data?.choices?.[0]?.message?.content;
-    return content?.trim() ?? null;
+    if (!content) {
+      console.error('Vision API returned empty content:', JSON.stringify(data));
+      return null;
+    }
+    return content.trim();
   } catch (error) {
     console.error('Vision API request failed:', error);
     return null;

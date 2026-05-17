@@ -63,9 +63,10 @@ Devvit.addSettings([
     name: 'hfApiToken',
     type: 'string',
     label: 'Hugging Face API Token',
-    helpText: 'Required for auto-draft feature. Get a free token at huggingface.co/settings/tokens',
+    helpText:
+      'Required for auto-draft. Set via CLI: devvit settings set hfApiToken. Get a free token at huggingface.co/settings/tokens',
+    scope: 'app',
     isSecret: true,
-    scope: 'installation',
   },
 ]);
 
@@ -145,7 +146,14 @@ Devvit.addSchedulerJob({
     const enableAutoDraft = settings.enableAutoDraft ?? DEFAULTS.enableAutoDraft;
     const apiKey = settings.hfApiToken as string;
 
-    if (enableAutoDraft && apiKey && post.url) {
+    if (!enableAutoDraft) {
+      console.log('Auto-draft is disabled in settings');
+    } else if (!apiKey) {
+      console.warn('Auto-draft enabled but hfApiToken is not set. Set it via: devvit settings set hfApiToken');
+    } else if (!post.url) {
+      console.warn('Auto-draft enabled but post has no URL');
+    } else {
+      console.log(`Generating alt-text for image: ${post.url}`);
       const draft = await generateAltText(post.url, apiKey);
       if (draft) {
         const draftText = AUTO_DRAFT_TEMPLATE.replace('{draft}', draft);
@@ -154,6 +162,9 @@ Devvit.addSchedulerJob({
           text: draftText,
         });
         await context.redis.incrBy(REDIS_KEYS.statsAutoDrafts, 1);
+        console.log('Auto-draft comment posted successfully');
+      } else {
+        console.error('Auto-draft generation returned no result');
       }
     }
 

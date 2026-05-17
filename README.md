@@ -4,14 +4,14 @@ Image-heavy subs (r/aww, r/Art, r/photography, r/OldSchoolCool) are effectively 
 
 ## Open Source Vision Model
 
-AltText Guardian uses **[Qwen2.5-VL-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct)**, an open-source vision-language model (Apache 2.0 licensed), accessed through [Hugging Face Inference Providers](https://huggingface.co/docs/inference-providers/index). This means:
+AltText Guardian uses **[Llama 4 Scout 17B](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct)**, an open-source vision-language model by Meta (Llama 4 Community License), accessed through [Hugging Face Inference Providers](https://huggingface.co/docs/inference-providers/index). This means:
 
 - **No paid API required** — Hugging Face offers a free tier for inference
 - **Open-source model** — The underlying model weights are freely available and auditable
-- **Community-driven** — Built on open research, not proprietary systems
+- **Vision-native** — Llama 4 Scout is a multimodal VLM that natively processes images to generate descriptions
 - **Privacy-conscious** — No vendor lock-in to closed commercial APIs
 
-Mods only need a free [Hugging Face token](https://huggingface.co/settings/tokens) to enable auto-draft descriptions.
+The app owner sets a free [Hugging Face token](https://huggingface.co/settings/tokens) once via the CLI to enable auto-draft descriptions across all installations.
 
 ## Features
 
@@ -34,7 +34,7 @@ Mods can configure these settings per-subreddit after installing:
 | Enable auto-draft | true | Generate alt-text suggestions with open-source vision model |
 | Enable flair | false | Flair non-compliant posts |
 | Flair text | "Needs Description" | Text for non-compliance flair |
-| Hugging Face API token | — | Free token required for auto-draft feature |
+| Hugging Face API token | — | App secret; set via `devvit settings set hfApiToken` (not per-subreddit) |
 
 ## Project Structure
 
@@ -52,4 +52,5 @@ src/
 npm install
 npm run build       # Type-check (tsc --noEmit)
 npx devvit upload   # Deploy to Reddit
+npx devvit settings set hfApiToken   # Set Hugging Face token (app secret)
 ```
