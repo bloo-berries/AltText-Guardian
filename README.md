@@ -6,7 +6,7 @@ Image-heavy subs (r/aww, r/Art, r/photography, r/OldSchoolCool) are effectively 
 
 AltText Guardian uses **[Llama 4 Scout 17B](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct)**, an open-source vision-language model by Meta (Llama 4 Community License), accessed through [Hugging Face Inference Providers](https://huggingface.co/docs/inference-providers/index). This means:
 
-- **No paid API required** — Hugging Face offers a free tier for inference
+- **No paid API required** — Accessed via Hugging Face's free inference tier
 - **Open-source model** — The underlying model weights are freely available and auditable
 - **Vision-native** — Llama 4 Scout is a multimodal VLM that natively processes images to generate descriptions
 - **Privacy-conscious** — No vendor lock-in to closed commercial APIs
@@ -18,7 +18,7 @@ The app owner sets a free [Hugging Face token](https://huggingface.co/settings/t
 - **Image detection** — Automatically identifies image and gallery posts (i.redd.it, imgur, Reddit galleries, etc.)
 - **Grace period** — Gives OP a configurable window (default: 10 minutes) to add a description before nudging
 - **Friendly nudge** — Posts an accessibility-focused comment reminding OP to add a description
-- **Auto-draft alt-text** — Optionally generates a suggested description using an open-source vision model via Hugging Face
+- **Auto-draft alt-text** — Optionally generates a suggested description using Meta's open-source Llama 4 Scout vision model
 - **Compliance tracking** — Tracks stats (organic descriptions, post-nudge additions, still missing) in Redis
 - **Mod queue** — Menu items to view a dashboard and list of non-compliant posts
 - **Flair support** — Optionally flairs posts that are missing descriptions
@@ -31,10 +31,10 @@ Mods can configure these settings per-subreddit after installing:
 |---------|---------|-------------|
 | Grace period | 10 min | Time before nudging OP |
 | Min description length | 50 chars | Minimum characters for a valid description |
-| Enable auto-draft | true | Generate alt-text suggestions with open-source vision model |
+| Enable auto-draft | true | Generate alt-text suggestions with Llama 4 Scout vision model |
 | Enable flair | false | Flair non-compliant posts |
 | Flair text | "Needs Description" | Text for non-compliance flair |
-| Hugging Face API token | — | App secret; set via `devvit settings set hfApiToken` (not per-subreddit) |
+| API token | — | Hugging Face token for Llama 4 Scout; set via `devvit settings set hfApiToken` (app secret) |
 
 ## Project Structure
 
@@ -43,7 +43,7 @@ src/
 ├── main.tsx            # Entry point: config, triggers, scheduler, menu items
 ├── constants.ts        # Defaults, templates, Redis keys, types
 ├── imageDetection.ts   # Image post detection and description checking
-└── visionApi.ts        # Hugging Face open-source vision model integration
+└── visionApi.ts        # Llama 4 Scout vision model integration (via Hugging Face)
 ```
 
 ## Development
@@ -52,5 +52,5 @@ src/
 npm install
 npm run build       # Type-check (tsc --noEmit)
 npx devvit upload   # Deploy to Reddit
-npx devvit settings set hfApiToken   # Set Hugging Face token (app secret)
+npx devvit settings set hfApiToken   # Set API token for Llama 4 Scout (via Hugging Face)
 ```

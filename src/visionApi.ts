@@ -1,7 +1,7 @@
 /**
- * Alt-text generation using open-source vision models via Hugging Face Inference Providers.
- * Uses the OpenAI-compatible chat completions endpoint at router.huggingface.co.
- * Model: meta-llama/Llama-4-Scout-17B-16E-Instruct (VLM available via HF Inference Providers)
+ * Alt-text generation using Meta's Llama 4 Scout open-source vision-language model.
+ * Accessed via Hugging Face Inference Providers (router.huggingface.co).
+ * Model: meta-llama/Llama-4-Scout-17B-16E-Instruct
  */
 
 const HF_ROUTER_URL = 'https://router.huggingface.co/v1/chat/completions';
@@ -24,7 +24,7 @@ interface ChatCompletionResponse {
 }
 
 /**
- * Generate alt-text for an image using an open-source vision model via Hugging Face.
+ * Generate alt-text for an image using Llama 4 Scout via Hugging Face Inference Providers.
  * Requires a free Hugging Face API token (https://huggingface.co/settings/tokens).
  */
 export async function generateAltText(

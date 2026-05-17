@@ -41,7 +41,7 @@ Devvit.addSettings([
   {
     name: 'enableAutoDraft',
     type: 'boolean',
-    label: 'Enable auto-draft alt-text (Hugging Face vision model)',
+    label: 'Enable auto-draft alt-text (Llama 4 Scout vision model)',
     defaultValue: DEFAULTS.enableAutoDraft,
     scope: 'installation',
   },
@@ -62,9 +62,9 @@ Devvit.addSettings([
   {
     name: 'hfApiToken',
     type: 'string',
-    label: 'Hugging Face API Token',
+    label: 'Hugging Face API Token (for Llama 4 Scout)',
     helpText:
-      'Required for auto-draft. Set via CLI: devvit settings set hfApiToken. Get a free token at huggingface.co/settings/tokens',
+      'Required for auto-draft. Llama 4 Scout is accessed via Hugging Face. Set via CLI: devvit settings set hfApiToken. Get a free token at huggingface.co/settings/tokens',
     scope: 'app',
     isSecret: true,
   },
