@@ -1,7 +1,14 @@
 import { Devvit } from '@devvit/public-api';
-import { DEFAULTS, REDIS_KEYS, NUDGE_TEMPLATE, AUTO_DRAFT_TEMPLATE } from './constants.js';
+import { DEFAULTS, REDIS_KEYS } from './constants.js';
 import { isImagePost, hasDescription } from './imageDetection.js';
+import { decideSchedulerAction } from './scheduler.js';
+import { renderAutoDraft, renderNudge } from './templating.js';
 import { generateAltText } from './visionApi.js';
+
+/** Lock TTL for the checkDescription job. Long enough to cover the full
+ *  flow (image fetch + Gemini + comment posts) but short enough that a
+ *  legitimate retry after a crash can eventually proceed. */
+const SCHEDULE_LOCK_TTL_MS = 10 * 60 * 1000;
 
 Devvit.configure({
   redditAPI: true,
@@ -125,23 +132,63 @@ Devvit.addSchedulerJob({
     const postId = event.data?.postId as string;
     if (!postId) return;
 
+    // Acquire an NX lock with TTL: prevents concurrent retries from posting
+    // duplicate nudge comments or calling Gemini twice. See the matching
+    // comment in the PostUpdate handler -- Devvit's redis.set returns a
+    // truthy value on success and an empty string when NX-conflict occurs,
+    // so `!!lockResult` distinguishes "we acquired it" from "in flight
+    // elsewhere".
+    const lockResult = await context.redis.set(REDIS_KEYS.scheduleLock(postId), '1', {
+      nx: true,
+      expiration: new Date(Date.now() + SCHEDULE_LOCK_TTL_MS),
+    });
+
+    const [nudgedData, compliantData] = await Promise.all([
+      context.redis.get(REDIS_KEYS.nudged(postId)),
+      context.redis.get(REDIS_KEYS.compliant(postId)),
+    ]);
+
     const post = await context.reddit.getPostById(postId);
     const settings = await context.settings.getAll();
     const minLength = (settings.minDescriptionLength as number) ?? DEFAULTS.minDescriptionLength;
 
-    // Re-check - OP may have added a description during grace period
-    if (hasDescription(post, minLength)) {
-      await context.redis.del(REDIS_KEYS.pending(postId));
-      await context.redis.set(REDIS_KEYS.compliant(postId), JSON.stringify({ timestamp: Date.now() }));
-      await context.redis.incrBy(REDIS_KEYS.statsOrganic, 1);
+    const decision = decideSchedulerAction({
+      lockAcquired: !!lockResult,
+      nudgedExists: !!nudgedData,
+      compliantExists: !!compliantData,
+      hasDescription: hasDescription(post, minLength),
+    });
+
+    if (decision.kind === 'skip') {
+      // If PostUpdate already won, clean up any leftover pending entry.
+      if (decision.reason === 'already_compliant') {
+        await context.redis.del(REDIS_KEYS.pending(postId));
+      }
+      console.log(`checkDescription: skipping ${postId} - ${decision.reason}`);
       return;
     }
 
-    // Build the nudge comment, including auto-draft if available
-    const nudgeTemplate = (settings.nudgeMessage as string) || NUDGE_TEMPLATE;
-    let commentText = nudgeTemplate.replace('{minLength}', String(minLength));
+    if (decision.kind === 'mark_compliant') {
+      // OP added a description during grace. NX-claim so we don't race with
+      // a concurrent PostUpdate path; only the winner increments statsOrganic.
+      // Truthy `claim` -> we won; "" (default StringValue) -> someone else did.
+      const claim = await context.redis.set(
+        REDIS_KEYS.compliant(postId),
+        JSON.stringify({ timestamp: Date.now() }),
+        { nx: true }
+      );
+      if (claim) {
+        await context.redis.incrBy(REDIS_KEYS.statsOrganic, 1);
+      }
+      await context.redis.del(REDIS_KEYS.pending(postId));
+      return;
+    }
 
-    // Generate auto-draft and append to the nudge comment
+    // decision.kind === 'post_nudge'. Build a single combined comment that
+    // includes the auto-draft (if available) rather than posting two separate
+    // comments -- keeps the OP's inbox clean and the nudge self-contained.
+    let commentText = renderNudge(minLength, settings.nudgeMessage as string | undefined);
+
     const enableAutoDraft = settings.enableAutoDraft ?? DEFAULTS.enableAutoDraft;
     const apiKey = settings.geminiApiKey as string;
 
@@ -155,8 +202,7 @@ Devvit.addSchedulerJob({
       console.log(`Generating alt-text for image: ${post.url}`);
       const draft = await generateAltText(post.url, apiKey);
       if (draft) {
-        const draftText = AUTO_DRAFT_TEMPLATE.replace('{draft}', draft);
-        commentText += `\n\n${draftText}`;
+        commentText += '\n\n' + renderAutoDraft(draft);
         await context.redis.incrBy(REDIS_KEYS.statsAutoDrafts, 1);
         console.log('Auto-draft included in nudge comment');
       } else {
@@ -164,16 +210,13 @@ Devvit.addSchedulerJob({
       }
     }
 
-    // Post the combined comment
     const nudgeComment = await context.reddit.submitComment({
       id: postId,
       text: commentText,
     });
 
-    // Store nudge comment ID for potential cleanup
     await context.redis.set(REDIS_KEYS.nudgeComment(postId), nudgeComment.id);
 
-    // Apply flair if enabled
     const enableFlair = settings.enableFlair ?? DEFAULTS.enableFlair;
     if (enableFlair) {
       const flairText = (settings.nonComplianceFlairText as string) || DEFAULTS.nonComplianceFlairText;
@@ -184,7 +227,6 @@ Devvit.addSchedulerJob({
       });
     }
 
-    // Update Redis state
     await context.redis.del(REDIS_KEYS.pending(postId));
     await context.redis.set(
       REDIS_KEYS.nudged(postId),
@@ -203,7 +245,6 @@ Devvit.addTrigger({
     const postId = event.post?.id;
     if (!postId) return;
 
-    // Check if we're tracking this post
     const pendingData = await context.redis.get(REDIS_KEYS.pending(postId));
     const nudgedData = await context.redis.get(REDIS_KEYS.nudged(postId));
 
@@ -215,30 +256,46 @@ Devvit.addTrigger({
 
     if (!hasDescription(post, minLength)) return;
 
-    // Description has been added - mark as compliant
+    // Atomic claim: only one concurrent runner wins. Devvit's redis.set
+    // resolves to a proto StringValue whose `value` field defaults to "" --
+    // so a successful SET returns the stored value ("OK"-equivalent) and a
+    // failed NX returns "". `if (!claim)` is a falsy check on that string.
+    // If Devvit ever changes that contract, both PostUpdate and the
+    // scheduler regress to double-counting; verify in playtest by firing
+    // two PostUpdate events for the same postId and checking statsNudged
+    // increments by exactly 1.
+    const claim = await context.redis.set(
+      REDIS_KEYS.compliant(postId),
+      JSON.stringify({ timestamp: Date.now() }),
+      { nx: true }
+    );
+    if (!claim) return;
+
     await context.redis.del(REDIS_KEYS.pending(postId));
     await context.redis.del(REDIS_KEYS.nudged(postId));
-    await context.redis.set(REDIS_KEYS.compliant(postId), JSON.stringify({ timestamp: Date.now() }));
     await context.redis.zRem(REDIS_KEYS.missingQueue, [postId]);
 
     if (nudgedData) {
-      // Description was added after our nudge
       await context.redis.incrBy(REDIS_KEYS.statsNudged, 1);
-      await context.redis.incrBy(REDIS_KEYS.statsMissing, -1);
 
-      // Remove flair if it was applied
+      // Floor statsMissing at 0: the counter can drift below state when the
+      // app upgrades over existing nudged posts or when set() partial-fails.
+      const newMissing = await context.redis.incrBy(REDIS_KEYS.statsMissing, -1);
+      if (newMissing < 0) {
+        await context.redis.set(REDIS_KEYS.statsMissing, '0');
+      }
+
       const parsed = JSON.parse(nudgedData);
       if (parsed.flairApplied) {
         await context.reddit.removePostFlair(post.subredditName, postId);
       }
 
-      // Edit nudge comment to acknowledge compliance
       const nudgeCommentId = await context.redis.get(REDIS_KEYS.nudgeComment(postId));
       if (nudgeCommentId) {
         try {
           const comment = await context.reddit.getCommentById(nudgeCommentId);
           await comment.edit({
-            text: `✅ Thank you for adding a description! Your post is now more accessible.\n\n*— AltText Guardian*`,
+            text: 'Description added. Screen reader users can now read this post.\n\n-- AltText Guardian',
           });
         } catch {
           // Comment may have been deleted

@@ -12,22 +12,24 @@ export function isImagePost(post: Post): boolean {
     return true;
   }
 
-  // Check URL against known image hosting domains
+  // Parse once; reuse for both domain and extension checks so query strings
+  // and fragments do not defeat the extension match.
+  let pathname: string | null = null;
   try {
     const parsedUrl = new URL(url);
     if (IMAGE_DOMAINS.some((domain) => parsedUrl.hostname === domain || parsedUrl.hostname.endsWith(`.${domain}`))) {
       return true;
     }
+    pathname = parsedUrl.pathname;
   } catch {
-    // URL parsing failed, continue with other checks
+    // URL parsing failed; fall back to raw-string match below
   }
 
-  // Check for image file extensions in URL
-  if (IMAGE_EXTENSIONS.some((ext) => url.endsWith(ext))) {
+  const haystack = pathname ?? url;
+  if (IMAGE_EXTENSIONS.some((ext) => haystack.endsWith(ext))) {
     return true;
   }
 
-  // Check if post has gallery media
   if (post.gallery && post.gallery.length > 0) {
     return true;
   }
@@ -37,6 +39,10 @@ export function isImagePost(post: Post): boolean {
 
 /**
  * Check if the post's OP has provided a description meeting the minimum length.
+ *
+ * Devvit's GalleryMedia type exposes only { status, url, height, width } -- no
+ * per-image caption -- so we cannot include gallery captions here. Body is the
+ * only OP-controlled text field the SDK surfaces.
  */
 export function hasDescription(post: Post, minLength: number): boolean {
   const body = post.body ?? '';
