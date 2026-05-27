@@ -4,7 +4,7 @@
   "description": "Accessibility mod tool that detects image posts missing alt-text descriptions",
   "private": true,
   "type": "module",
-  "license": "BSD-3-Clause",
+  "license": "MIT",
   "main": "src/main.tsx",
   "scripts": {
     "build": "tsc --noEmit",
