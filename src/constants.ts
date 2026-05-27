@@ -26,16 +26,16 @@ export const REDIS_KEYS = {
 } as const;
 
 /** Nudge comment template */
-export const NUDGE_TEMPLATE = `Your image post has no description, so screen reader users can't tell what it shows. Edit the post body to add at least {minLength} characters describing the image.
+export const NUDGE_TEMPLATE = `Hi there! This post appears to contain an image but no description was found.
 
--- AltText Guardian (automated)`;
+Adding text descriptions makes your post accessible to people using screen readers and improves the experience for everyone. This is an automated accessibility feature from AltText Guardian.
+
+Here's a generated description for OP's image:`;
 
 /** Auto-draft comment template */
-export const AUTO_DRAFT_TEMPLATE = `Auto-generated suggestion (may have errors):
+export const AUTO_DRAFT_TEMPLATE = `{draft}
 
-{draft}
-
-Copy, edit, or write your own.`;
+Feel free to write your own description, or you can always rely on AltText Guardian!`;
 
 /** Image hosting domains to detect */
 export const IMAGE_DOMAINS = [
