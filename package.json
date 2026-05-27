@@ -17,10 +17,10 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@devvit/public-api": "0.12.23"
+    "@devvit/public-api": "0.13.0"
   },
   "devDependencies": {
-    "@devvit/tsconfig": "0.12.23",
+    "@devvit/tsconfig": "0.13.0",
     "fast-check": "^3.23.2",
     "typescript": "5.8.3",
     "vitest": "^2.1.9"
