@@ -137,19 +137,11 @@ Devvit.addSchedulerJob({
       return;
     }
 
-    // Post nudge comment
+    // Build the nudge comment, including auto-draft if available
     const nudgeTemplate = (settings.nudgeMessage as string) || NUDGE_TEMPLATE;
-    const nudgeText = nudgeTemplate.replace('{minLength}', String(minLength));
+    let commentText = nudgeTemplate.replace('{minLength}', String(minLength));
 
-    const nudgeComment = await context.reddit.submitComment({
-      id: postId,
-      text: nudgeText,
-    });
-
-    // Store nudge comment ID for potential cleanup
-    await context.redis.set(REDIS_KEYS.nudgeComment(postId), nudgeComment.id);
-
-    // Auto-draft if enabled
+    // Generate auto-draft and append to the nudge comment
     const enableAutoDraft = settings.enableAutoDraft ?? DEFAULTS.enableAutoDraft;
     const apiKey = settings.geminiApiKey as string;
 
@@ -164,16 +156,22 @@ Devvit.addSchedulerJob({
       const draft = await generateAltText(post.url, apiKey);
       if (draft) {
         const draftText = AUTO_DRAFT_TEMPLATE.replace('{draft}', draft);
-        await context.reddit.submitComment({
-          id: nudgeComment.id,
-          text: draftText,
-        });
+        commentText += `\n\n${draftText}`;
         await context.redis.incrBy(REDIS_KEYS.statsAutoDrafts, 1);
-        console.log('Auto-draft comment posted successfully');
+        console.log('Auto-draft included in nudge comment');
       } else {
         console.error('Auto-draft generation returned no result');
       }
     }
+
+    // Post the combined comment
+    const nudgeComment = await context.reddit.submitComment({
+      id: postId,
+      text: commentText,
+    });
+
+    // Store nudge comment ID for potential cleanup
+    await context.redis.set(REDIS_KEYS.nudgeComment(postId), nudgeComment.id);
 
     // Apply flair if enabled
     const enableFlair = settings.enableFlair ?? DEFAULTS.enableFlair;
