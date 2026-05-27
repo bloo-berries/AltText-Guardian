@@ -1,6 +1,6 @@
 /** Default settings values */
 export const DEFAULTS = {
-  gracePeriodMinutes: 10,
+  gracePeriodMinutes: 2,
   minDescriptionLength: 50,
   enableAutoDraft: true,
   enableFlair: false,

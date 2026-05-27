@@ -7,7 +7,14 @@ Devvit.configure({
   redditAPI: true,
   redis: true,
   http: {
-    domains: ['router.huggingface.co'],
+    domains: [
+      'generativelanguage.googleapis.com',
+      'i.redd.it',
+      'i.imgur.com',
+      'imgur.com',
+      'preview.redd.it',
+      'external-preview.redd.it',
+    ],
   },
 });
 
@@ -41,7 +48,7 @@ Devvit.addSettings([
   {
     name: 'enableAutoDraft',
     type: 'boolean',
-    label: 'Enable auto-draft alt-text (Llama 4 Scout vision model)',
+    label: 'Enable auto-draft alt-text (Google Gemini vision model)',
     defaultValue: DEFAULTS.enableAutoDraft,
     scope: 'installation',
   },
@@ -60,11 +67,11 @@ Devvit.addSettings([
     scope: 'installation',
   },
   {
-    name: 'hfApiToken',
+    name: 'geminiApiKey',
     type: 'string',
-    label: 'Hugging Face API Token (for Llama 4 Scout)',
+    label: 'Google Gemini API Key',
     helpText:
-      'Required for auto-draft. Llama 4 Scout is accessed via Hugging Face. Set via CLI: devvit settings set hfApiToken. Get a free token at huggingface.co/settings/tokens',
+      'Required for auto-draft. Set via CLI: devvit settings set geminiApiKey. Get a free key at aistudio.google.com/apikey',
     scope: 'app',
     isSecret: true,
   },
@@ -144,12 +151,12 @@ Devvit.addSchedulerJob({
 
     // Auto-draft if enabled
     const enableAutoDraft = settings.enableAutoDraft ?? DEFAULTS.enableAutoDraft;
-    const apiKey = settings.hfApiToken as string;
+    const apiKey = settings.geminiApiKey as string;
 
     if (!enableAutoDraft) {
       console.log('Auto-draft is disabled in settings');
     } else if (!apiKey) {
-      console.warn('Auto-draft enabled but hfApiToken is not set. Set it via: devvit settings set hfApiToken');
+      console.warn('Auto-draft enabled but geminiApiKey is not set. Set it via: devvit settings set geminiApiKey');
     } else if (!post.url) {
       console.warn('Auto-draft enabled but post has no URL');
     } else {
