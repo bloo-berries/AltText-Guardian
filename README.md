@@ -4,16 +4,16 @@ Image-heavy subs (r/aww, r/Art, r/photography, r/OldSchoolCool) are effectively 
 
 ## Vision Model
 
-AltText Guardian uses **[Google Gemini 2.0 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-2.0-flash)** for auto-draft alt-text generation. The image bytes are fetched by the app, base64-encoded, and sent to Gemini via `inline_data` for direct multimodal analysis.
+AltText Guardian uses **[Google Gemini 2.5 Flash-Lite](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash-lite)** for auto-draft alt-text generation. The image bytes are fetched by the app, base64-encoded, and sent to Gemini via `inline_data` for direct multimodal analysis.
 
 The app owner sets a free [Google AI Studio API key](https://aistudio.google.com/apikey) once via the CLI to enable auto-draft descriptions across all installations.
 
 ## Features
 
 - **Image detection** — Automatically identifies image and gallery posts (i.redd.it, imgur, Reddit galleries, etc.)
-- **Grace period** — Gives OP a configurable window (default: 10 minutes) to add a description before nudging
-- **Friendly nudge** — Posts an accessibility-focused comment reminding OP to add a description
-- **Auto-draft alt-text** — Optionally generates a suggested description using Google's Gemini 2.0 Flash vision model
+- **Grace period** — Gives OP a configurable window (default: 2 minutes) to add a description before nudging
+- **Friendly nudge** — Posts an accessibility-focused comment reminding OP to add a description, with the auto-draft included in the same comment
+- **Auto-draft alt-text** — Optionally generates a suggested description using Google's Gemini 2.5 Flash-Lite vision model
 - **Compliance tracking** — Tracks stats (organic descriptions, post-nudge additions, still missing) in Redis
 - **Mod queue** — Menu items to view a dashboard and list of non-compliant posts
 - **Flair support** — Optionally flairs posts that are missing descriptions
@@ -24,9 +24,9 @@ Mods can configure these settings per-subreddit after installing:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| Grace period | 10 min | Time before nudging OP |
+| Grace period | 2 min | Time before nudging OP |
 | Min description length | 50 chars | Minimum characters for a valid description |
-| Enable auto-draft | true | Generate alt-text suggestions with Gemini 2.0 Flash |
+| Enable auto-draft | true | Generate alt-text suggestions with Gemini 2.5 Flash-Lite |
 | Enable flair | false | Flair non-compliant posts |
 | Flair text | "Needs Description" | Text for non-compliance flair |
 | API key | — | Google Gemini API key; set via `devvit settings set geminiApiKey` (app secret) |
@@ -38,7 +38,7 @@ src/
 ├── main.tsx            # Entry point: config, triggers, scheduler, menu items
 ├── constants.ts        # Defaults, templates, Redis keys, types
 ├── imageDetection.ts   # Image post detection and description checking
-└── visionApi.ts        # Google Gemini 2.0 Flash vision model integration
+└── visionApi.ts        # Google Gemini 2.5 Flash-Lite vision model integration
 ```
 
 ## Development
