@@ -1,11 +1,11 @@
 /**
- * Alt-text generation using Google Gemini 2.0 Flash vision capabilities.
+ * Alt-text generation using Google Gemini 2.5 Flash-Lite vision capabilities.
  * Fetches the image, base64-encodes it, and sends it via inline_data
  * for direct image understanding.
  */
 
 const GEMINI_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
 
 const VISION_PROMPT = `Describe this image for someone who cannot see it. Focus on:
 1. What is depicted (people, objects, scene, action)
@@ -58,7 +58,7 @@ function mimeTypeFromUrl(url: string): string | null {
 }
 
 /**
- * Generate alt-text for an image using Google Gemini 2.0 Flash.
+ * Generate alt-text for an image using Google Gemini 2.5 Flash-Lite.
  * Fetches the image from the given URL, base64-encodes it, and sends it
  * to Gemini via inline_data for direct image analysis.
  *

@@ -48,7 +48,7 @@ Devvit.addSettings([
   {
     name: 'enableAutoDraft',
     type: 'boolean',
-    label: 'Enable auto-draft alt-text (Google Gemini vision model)',
+    label: 'Enable auto-draft alt-text (Gemini 2.5 Flash-Lite vision)',
     defaultValue: DEFAULTS.enableAutoDraft,
     scope: 'installation',
   },
