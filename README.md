@@ -1,6 +1,6 @@
 # AltText Guardian
 
-Image-heavy subs (r/aww, r/Art, r/photography, r/OldSchoolCool) are effectively unusable for screen-reader users because almost no posts have descriptions. AltText Guardian detects image submissions lacking a description in the post body, prompts the OP via auto-comment, optionally generates a draft alt-text using a vision model for the OP to approve and post as a top-level comment, and tracks compliance over time. Mods get a queue view of "images missing descriptions."
+Image-heavy subs (r/aww, r/Art, r/photography, r/OldSchoolCool) are effectively unusable for screen-reader users because almost no posts have descriptions. AltText Guardian detects image submissions lacking post description, generates auto-reply alt-text for the OP using a vision model. Mods get an automatically generated alt-text description in their auto-reply mod bot using a computer-vision text render!
 
 ## Vision Model
 
