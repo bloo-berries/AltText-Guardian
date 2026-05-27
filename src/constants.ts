@@ -26,11 +26,11 @@ export const REDIS_KEYS = {
 } as const;
 
 /** Nudge comment template */
-export const NUDGE_TEMPLATE = `Hi there! This post appears to contain an image but no description was found.
+export const NUDGE_TEMPLATE = `Hey! This post appears to contain an image but no description was found.
 
-Adding text descriptions makes your post accessible to people using screen readers and improves the experience for everyone. This is an automated accessibility feature from AltText Guardian.
+Text descriptions make posts accessible to Redditors using screen readers, and improves everyone's experience. This is an automated accessibility feature from AltText Guardian.
 
-Here's a generated description for OP's image:`;
+Here's a generated description of OP's image:`;
 
 /** Auto-draft comment template */
 export const AUTO_DRAFT_TEMPLATE = `{draft}
